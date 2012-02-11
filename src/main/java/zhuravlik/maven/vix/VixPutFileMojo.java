@@ -19,49 +19,56 @@
 
 package zhuravlik.maven.vix;
 
-/**
- * Created by IntelliJ IDEA.
- * User: anton
- * Date: 11.02.12
- * Time: 21:06
- * To change this template use File | Settings | File Templates.
- */
-
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
 /**
- * Goal which deletes file in guest.
+ * Created by IntelliJ IDEA.
+ * User: anton
+ * Date: 11.02.12
+ * Time: 23:18
+ * To change this template use File | Settings | File Templates.
+ */
+/**
+ * Goal which gets file from guest to host.
  *
- * @goal deleteFile
+ * @goal putFile
  *
  */
-public class VixDeleteFileMojo extends VixAbstractMojo {
+public class VixPutFileMojo extends VixAbstractMojo {
 
     /**
-     * File path in guest.
+     * Path at host.
      * @parameter expression="${vix.path}"
      */
     private String path;
+
+
+    /**
+     * Destination in guest.
+     * @parameter expression="${vix.destination}"
+     */
+    private String destination;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         initialize();
         login();
 
-        getLog().info("Deleting file [" + path + "] in guest");
+        getLog().info("Copying file [" + path + "] to guest path [" + destination + "]");
 
         if (path == null) {
             throw new MojoExecutionException("Path not specified");
         }
 
+        if (destination == null) {
+            throw new MojoExecutionException("Destination not specified");
+        }
+
         int jobHandle = Vix.VIX_INVALID_HANDLE;
 
-        jobHandle = LibraryHelper.getInstance().VixVM_DeleteFileInGuest(vmHandle,
-                path,
-                null,
-                null);
+        jobHandle = LibraryHelper.getInstance().VixVM_CopyFileFromHostToGuest(vmHandle,
+                path, destination, 0, Vix.VIX_INVALID_HANDLE, null, null);
 
 
         int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);

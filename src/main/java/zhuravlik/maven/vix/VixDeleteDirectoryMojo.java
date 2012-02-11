@@ -45,6 +45,10 @@ public class VixDeleteDirectoryMojo extends VixAbstractMojo {
     private String path;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        initialize();
+        login();
+
         getLog().info("Deleting directory [" + path + "] in guest");
 
         if (path == null) {
@@ -62,6 +66,9 @@ public class VixDeleteDirectoryMojo extends VixAbstractMojo {
 
         int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+
+        logout();
         checkError(err);
+        finish();
     }
 }

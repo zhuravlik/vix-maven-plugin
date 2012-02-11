@@ -80,6 +80,33 @@ public abstract class VixAbstractMojo
      * @parameter expression="${vix.ignoreerror}"
      */
     private boolean ignoreError;
+
+
+
+    /**
+     * Guest OS's username.
+     * @parameter expression="${vix.guestUser}"
+     */
+    private String guestUser;
+
+    /**
+     * Guest OS's password.
+     * @parameter expression="${vix.guestPassword}"
+     */
+    private String guestPassword;
+
+    /**
+     * Login into guest interactively.
+     * @parameter expression="${vix.guestPassword}"
+     */
+    private boolean guestLoginInteractive;
+
+
+    /**
+     * Guest login timeout.
+     * @parameter expression="${vix.guestPassword}"
+     */
+    private int guestLoginTimeout;
     
     
     protected int vmHandle;
@@ -93,7 +120,52 @@ public abstract class VixAbstractMojo
                 throw new MojoExecutionException("VMWare error: " + LibraryHelper.getInstance().Vix_GetErrorText(err, null));
             else
                 getLog().error("VMWare error: " + LibraryHelper.getInstance().Vix_GetErrorText(err, null));
+
+            finish();
         }
+    }
+
+
+    public void login() throws MojoExecutionException {
+        getLog().info("Logging in to guest");
+
+        if (guestUser == null || guestPassword == null) {
+            throw new MojoExecutionException("Guest user or password not specified");
+        }
+
+        int jobHandle = Vix.VIX_INVALID_HANDLE;
+
+        jobHandle = LibraryHelper.getInstance().VixVM_LoginInGuest(vmHandle, guestUser, guestPassword,
+                guestLoginInteractive ? Vix.VIX_LOGIN_IN_GUEST_REQUIRE_INTERACTIVE_ENVIRONMENT : 0,
+                null, null);
+
+        int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
+        LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+        checkError(err);
+
+        getLog().info("Waiting for Tools in guest");
+
+        jobHandle = Vix.VIX_INVALID_HANDLE;
+
+        jobHandle = LibraryHelper.getInstance().VixVM_WaitForToolsInGuest(vmHandle, guestLoginTimeout, null, null);
+
+        err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
+        LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+        checkError(err);
+    }
+
+    public void logout() throws MojoExecutionException {
+        int jobHandle = Vix.VIX_INVALID_HANDLE;
+
+        jobHandle = LibraryHelper.getInstance().VixVM_LogoutFromGuest(
+                vmHandle,
+                null,
+                null
+        );
+
+        int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
+        LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+        checkError(err);
     }
     
     

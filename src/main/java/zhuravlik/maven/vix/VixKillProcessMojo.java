@@ -59,6 +59,10 @@ public class VixKillProcessMojo extends VixAbstractMojo {
 
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        initialize();
+        login();
+
         if (name == null && cmdline == null)
             throw new MojoExecutionException("Process name or command line are not specified");
 
@@ -109,5 +113,8 @@ public class VixKillProcessMojo extends VixAbstractMojo {
         }
 
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+
+        logout();
+        finish();
     }
 }

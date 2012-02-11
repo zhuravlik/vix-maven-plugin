@@ -52,6 +52,10 @@ public class VixGetFileMojo extends VixAbstractMojo {
     private String destination;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        initialize();
+        login();
+
         getLog().info("Copying file [" + path + "] from guest to path [" + destination + "]");
 
         if (path == null) {
@@ -70,6 +74,9 @@ public class VixGetFileMojo extends VixAbstractMojo {
 
         int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+
+        logout();
         checkError(err);
+        finish();
     }
 }

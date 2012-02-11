@@ -54,7 +54,8 @@ public class VixCaptureScreenMojo extends VixAbstractMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
 
-         initialize();
+        initialize();
+        login();
 
 
         int jobHandle = Vix.VIX_INVALID_HANDLE;
@@ -69,7 +70,10 @@ public class VixCaptureScreenMojo extends VixAbstractMojo {
                 byteCount, data,
                 Vix.VIX_PROPERTY_NONE);
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
+
+        logout();
         checkError(err);
+        finish();
 
         Pointer p = data.getValue();
         byte[] bdata = p.getByteArray(0, byteCount.getValue());

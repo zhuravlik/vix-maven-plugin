@@ -52,6 +52,9 @@ public class VixInstallToolsMojo extends VixAbstractMojo {
 
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        initialize();
+
         getLog().info("Installing or upgrading Tools in guest");
 
         int jobHandle = Vix.VIX_INVALID_HANDLE;
@@ -69,5 +72,7 @@ public class VixInstallToolsMojo extends VixAbstractMojo {
         int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
         checkError(err);
+
+        finish();
     }
 }

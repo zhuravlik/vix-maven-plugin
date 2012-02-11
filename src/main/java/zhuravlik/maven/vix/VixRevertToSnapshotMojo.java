@@ -27,17 +27,18 @@ import org.apache.maven.plugin.MojoFailureException;
  * Created by IntelliJ IDEA.
  * User: anton
  * Date: 11.02.12
- * Time: 21:09
+ * Time: 23:21
  * To change this template use File | Settings | File Templates.
  */
 
 /**
- * Goal which deletes snapshot with name specified.
+ * Goal which reverts to specified snapshot.
  *
- * @goal deleteSnapshot
+ * @goal revertToSnapshot
  *
  */
-public class VixDeleteSnapshotMojo extends VixAbstractMojo {
+public class VixRevertToSnapshotMojo extends VixAbstractMojo {
+
     /**
      * Snapshot name.
      * @parameter expression="${vix.name}"
@@ -45,39 +46,48 @@ public class VixDeleteSnapshotMojo extends VixAbstractMojo {
     private String name;
 
     /**
-     * Delete with children.
-     * @parameter expression="${vix.withchildren}"
+     * Suppress powered on state.
+     * @parameter expression="${vix.suppressOn}"
      */
-    private boolean withChildren;
+    private boolean suppressOn;
+
+    /**
+     * Launch GUI.
+     * @parameter expression="${vix.launchGui}"
+     */
+    private boolean launchGui;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-
         initialize();
-
 
         if (name == null || name.length() == 0) {
             throw new MojoExecutionException("Snapshot name is not specified");
         }
 
-        getLog().info("Removing snapshot [" + name + "]");
+        getLog().info("Reverting to snapshot [" + name + "]");
+
+        //log("VM Handle: " + vmHandle);
 
         int jobHandle = Vix.VIX_INVALID_HANDLE;
         IntByReference snapshotHandlePtr = new IntByReference();
 
-        jobHandle = LibraryHelper.getInstance().VixVM_GetNamedSnapshot(vmHandle,
+        int err = LibraryHelper.getInstance().VixVM_GetNamedSnapshot(vmHandle,
                 name,
                 snapshotHandlePtr);
-
-        int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
-        LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
         checkError(err);
 
+        //log("Snapshot handle: " + snapshotHandlePtr.getValue(), Project.MSG_INFO);
 
-        jobHandle = LibraryHelper.getInstance().VixVM_RemoveSnapshot(vmHandle,
+        int options = 0;
+
+        if (suppressOn) options |= Vix.VIX_VMPOWEROP_SUPPRESS_SNAPSHOT_POWERON;
+        if (launchGui) options |= Vix.VIX_VMPOWEROP_LAUNCH_GUI;
+
+        jobHandle = LibraryHelper.getInstance().VixVM_RevertToSnapshot(vmHandle,
                 snapshotHandlePtr.getValue(),
-                withChildren ? Vix.VIX_SNAPSHOT_REMOVE_CHILDREN : 0,
-                null,
-                null);
+                options,
+                Vix.VIX_INVALID_HANDLE,
+                null, null);
 
         LibraryHelper.getInstance().Vix_ReleaseHandle(snapshotHandlePtr.getValue());
 

@@ -19,50 +19,72 @@
 
 package zhuravlik.maven.vix;
 
-/**
- * Created by IntelliJ IDEA.
- * User: anton
- * Date: 11.02.12
- * Time: 21:06
- * To change this template use File | Settings | File Templates.
- */
-
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
 /**
- * Goal which deletes file in guest.
+ * Created by IntelliJ IDEA.
+ * User: anton
+ * Date: 11.02.12
+ * Time: 23:24
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Goal which launches program in guest
  *
- * @goal deleteFile
+ * @goal runProgram
  *
  */
-public class VixDeleteFileMojo extends VixAbstractMojo {
+public class VixRunProgramMojo extends VixAbstractMojo {
 
     /**
-     * File path in guest.
+     * Fully qualified program path.
      * @parameter expression="${vix.path}"
      */
     private String path;
 
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    /**
+     * Command-line args.
+     * @parameter expression="${vix.args}"
+     */
+    private String args;
 
+    /**
+     * Do not wait for operation to finish, return immediately.
+     * @parameter expression="${vix.returnImmediately}"
+     */
+    private boolean returnImmediately;
+
+    /**
+     * Activate program window after start (Windows-only).
+     * @parameter expression="${vix.activateWindow}"
+     */
+    private boolean activateWindow;
+
+    public void execute() throws MojoExecutionException, MojoFailureException {
         initialize();
         login();
 
-        getLog().info("Deleting file [" + path + "] in guest");
+        getLog().info("Running program [" + path + "] in guest with args [" + args + "]");
 
         if (path == null) {
             throw new MojoExecutionException("Path not specified");
         }
 
+        if (args == null) {
+            args = "";
+        }
+
         int jobHandle = Vix.VIX_INVALID_HANDLE;
 
-        jobHandle = LibraryHelper.getInstance().VixVM_DeleteFileInGuest(vmHandle,
-                path,
-                null,
-                null);
+        int options = 0;
 
+        if (returnImmediately) options |= Vix.VIX_RUNPROGRAM_RETURN_IMMEDIATELY;
+        if (activateWindow) options |= Vix.VIX_RUNPROGRAM_ACTIVATE_WINDOW;
+
+        jobHandle = LibraryHelper.getInstance().VixVM_RunProgramInGuest(vmHandle, path, args,
+                options, Vix.VIX_INVALID_HANDLE, null, null);
 
         int err = LibraryHelper.getInstance().VixJob_Wait(jobHandle, Vix.VIX_PROPERTY_NONE);
         LibraryHelper.getInstance().Vix_ReleaseHandle(jobHandle);
